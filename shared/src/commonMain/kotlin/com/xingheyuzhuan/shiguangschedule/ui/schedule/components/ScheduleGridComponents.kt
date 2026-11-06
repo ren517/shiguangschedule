@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.xingheyuzhuan.shiguangschedule.data.db.main.CourseWithWeeks
 import com.xingheyuzhuan.shiguangschedule.data.db.main.TimeSlot
 import com.xingheyuzhuan.shiguangschedule.ui.schedule.model.MergedCourseBlock
+import com.xingheyuzhuan.shiguangschedule.ui.schedule.util.TimeAxisCompressor
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
@@ -208,6 +209,8 @@ fun DayHeader(
             }
 
             val displayDaysCount = displayDays.size
+            // 今天高亮用的鲜艳 accent 色（暖橙），醒目但不突兀
+            val todayAccent = Color(0xFFFF6D3F)
 
             Row(
                 modifier = Modifier
@@ -225,11 +228,13 @@ fun DayHeader(
                     }
             ) {
                 displayDays.forEachIndexed { index, day ->
+                    val isToday = index == todayIndex
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .background(if (index == todayIndex) MaterialTheme.colorScheme.primaryContainer.copy(0.4f) else Color.Transparent),
+                            // 今天：鲜艳 accent 的柔和底色，醒目但不突兀
+                            .background(if (isToday) todayAccent.copy(alpha = 0.22f) else Color.Transparent),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
@@ -243,7 +248,7 @@ fun DayHeader(
                                 text = day,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = textColor,
+                                color = if (isToday) todayAccent else textColor,
                                 maxLines = 1,
                                 style = TextStyle(
                                     lineHeight = 16.sp
@@ -255,7 +260,7 @@ fun DayHeader(
                                 Text(
                                     text = dates[index],
                                     fontSize = 10.sp,
-                                    color = subTextColor,
+                                    color = if (isToday) todayAccent else subTextColor,
                                     maxLines = 1,
                                     style = TextStyle(
                                         lineHeight = 12.sp
@@ -297,53 +302,36 @@ fun TimeColumn(
         }
     }
 
-    Column(modifier.width(style.timeColumnWidth)) {
-        for (index in 0 until maxGridSections) {
-            val isCurrentHourActive = if (is24HourMode) {
-                currentHour == index && currentSectionIndex != -1
-            } else {
-                index + 1 == currentSectionIndex
-            }
+    if (is24HourMode) {
+        Column(modifier.width(style.timeColumnWidth)) {
+            for (index in 0 until maxGridSections) {
+                val isCurrentHourActive = currentHour == index && currentSectionIndex != -1
 
-            BoxWithConstraints(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(style.sectionHeight)
-                    .clickable { onTimeSlotClicked() }
-                    .background(if (isCurrentHourActive) MaterialTheme.colorScheme.primaryContainer.copy(0.4f) else Color.Transparent)
-                    .drawBehind {
-                        if (!style.hideGridLines) {
-                            drawLine(lineColor, Offset(size.width, 0f), Offset(size.width, size.height), strokeWidthPx)
-                            if (!is24HourMode) {
-                                drawLine(lineColor, Offset(0f, size.height), Offset(size.width, size.height), strokeWidthPx)
-                            }
-                        }
-                    },
-                contentAlignment = if (is24HourMode) Alignment.TopCenter else Alignment.Center
-            ) {
-                val h = maxHeight
-                if (is24HourMode && activeDragMinuteStr != null && index == activeDragHour) {
-                    Box(
-                        modifier = Modifier.matchParentSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = ":$activeDragMinuteStr",
-                            fontSize = if (h < 32.dp) 11.sp else 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = textColor
-                        )
-                    }
-                }
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = if (is24HourMode) Arrangement.Top else Arrangement.Center,
+                BoxWithConstraints(
                     modifier = Modifier
-                        .padding(horizontal = 1.dp)
-                        .then(if (is24HourMode) Modifier.offset(y = (-7).dp) else Modifier)
+                        .fillMaxWidth()
+                        .height(style.sectionHeight)
+                        .clickable { onTimeSlotClicked() }
+                        .background(if (isCurrentHourActive) MaterialTheme.colorScheme.primaryContainer.copy(0.4f) else Color.Transparent)
+                        .drawBehind {
+                            if (!style.hideGridLines) {
+                                drawLine(lineColor, Offset(size.width, 0f), Offset(size.width, size.height), strokeWidthPx)
+                            }
+                        },
+                    contentAlignment = Alignment.TopCenter
                 ) {
-                    if (is24HourMode) {
+                    val h = maxHeight
+                    if (activeDragMinuteStr != null && index == activeDragHour) {
+                        Box(modifier = Modifier.matchParentSize(), contentAlignment = Alignment.Center) {
+                            Text(text = ":$activeDragMinuteStr", fontSize = if (h < 32.dp) 11.sp else 12.sp, fontWeight = FontWeight.Bold, color = textColor)
+                        }
+                    }
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Top,
+                        modifier = Modifier.padding(horizontal = 1.dp).offset(y = (-7).dp)
+                    ) {
                         val formatHourStr = "${index.toString().padStart(2, '0')}:00"
                         Text(
                             text = formatHourStr,
@@ -351,34 +339,70 @@ fun TimeColumn(
                             fontWeight = FontWeight.Medium,
                             color = if (isCurrentHourActive) MaterialTheme.colorScheme.primary else textColor
                         )
-                    } else {
-                        val slot = timeSlots.getOrNull(index)
-                        if (slot != null) {
-                            Text(
-                                text = slot.alias ?: slot.number.toString(),
-                                fontSize = if (h < 32.dp) 11.sp else 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = textColor,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            if (!style.hideSectionTime) {
-                                when {
-                                    h >= 52.dp -> {
-                                        Spacer(Modifier.height(2.dp))
-                                        TimeText(slot.startTime, subTextColor)
-                                        TimeText(slot.endTime, subTextColor)
-                                    }
-                                    h >= 38.dp -> {
-                                        Text(text = "${slot.startTime}-${slot.endTime}", fontSize = 8.sp, color = subTextColor, maxLines = 1)
-                                    }
-                                }
+                    }
+                }
+            }
+        }
+    } else {
+        // 节次模式：绝对时间轴（大空档压缩）——每个节次标签放在其真实时间位置，午休/晚休被压紧
+        val axisCompressor = remember(timeSlots) { TimeAxisCompressor(timeSlots.sortedBy { it.number }) }
+        BoxWithConstraints(modifier.width(style.timeColumnWidth)) {
+            val totalHeightDp = maxHeight
+            val dpPerMinute = totalHeightDp / axisCompressor.compressedTotalMin
+
+            axisCompressor.sortedSlots.forEach { slot ->
+                val startMin = hhmmToMinute(slot.startTime) ?: return@forEach
+                val endMin = hhmmToMinute(slot.endTime) ?: return@forEach
+                val topDp = dpPerMinute * axisCompressor.compress(startMin)
+                val slotHeightDp = dpPerMinute * (axisCompressor.compress(endMin) - axisCompressor.compress(startMin))
+                val isCurrent = slot.number == currentSectionIndex
+
+                Box(
+                    modifier = Modifier
+                        .offset(y = topDp)
+                        .height(slotHeightDp)
+                        .fillMaxWidth()
+                        .clickable { onTimeSlotClicked() }
+                        .background(if (isCurrent) MaterialTheme.colorScheme.primaryContainer.copy(0.4f) else Color.Transparent)
+                        .drawBehind {
+                            if (!style.hideGridLines) {
+                                drawLine(lineColor, Offset(size.width, 0f), Offset(size.width, size.height), strokeWidthPx)
+                                drawLine(lineColor, Offset(0f, 0f), Offset(size.width, 0f), strokeWidthPx)
                             }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(horizontal = 1.dp)
+                    ) {
+                        Text(
+                            text = slot.alias ?: slot.number.toString(),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        if (!style.hideSectionTime) {
+                            TimeText(slot.startTime, subTextColor)
+                            TimeText(slot.endTime, subTextColor)
                         }
                     }
                 }
             }
         }
     }
+}
+
+/** "HH:mm" → 分钟数（自 00:00 起）。解析失败返回 null。 */
+private fun hhmmToMinute(text: String?): Int? {
+    if (text.isNullOrBlank()) return null
+    val parts = text.split(":")
+    if (parts.size != 2) return null
+    val h = parts[0].trim().toIntOrNull() ?: return null
+    val m = parts[1].trim().toIntOrNull() ?: return null
+    return h * 60 + m
 }
 
 /**

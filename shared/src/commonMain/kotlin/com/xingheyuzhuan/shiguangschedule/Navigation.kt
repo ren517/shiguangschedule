@@ -27,13 +27,14 @@ sealed interface Destination : NavKey {
 
     // --- 一级导航页面（底栏对应页面） ---
     @Serializable data object CourseSchedule : MainDestination
+    @Serializable data object ExamSchedule : MainDestination
+    @Serializable data object ScoreSchedule : MainDestination
     @Serializable data object Settings : MainDestination
-    @Serializable data object TodaySchedule : MainDestination
 
     // --- 二级功能页面 ---
     @Serializable data object TimeScheduleManagement : Destination
     @Serializable data object ManageCourseTables : Destination
-    @Serializable data object SchoolSelectionListScreen : Destination
+    @Serializable data object UserManagement : Destination
     @Serializable data object CourseTableConversion : Destination
     @Serializable data object NotificationSettings : Destination
     @Serializable data object MoreOptions : Destination
@@ -52,20 +53,6 @@ sealed interface Destination : NavKey {
     @Serializable data object HolidayManagement : Destination
 
     // --- 动态传参页面 ---
-    @Serializable
-    data class AdapterSelection(
-        val schoolId: String,
-        val schoolName: String,
-        val categoryNumber: Int,
-        val resourceFolder: String
-    ) : Destination
-
-    @Serializable
-    data class WebView(
-        val initialUrl: String? = "about:blank",
-        val assetJsPath: String? = null
-    ) : Destination
-
     @Serializable
     data class AddEditCourse(
         val courseId: String? = null
@@ -101,12 +88,13 @@ val navSerializersModule = SerializersModule {
         // 一级主界面
         subclass(Destination.CourseSchedule::class)
         subclass(Destination.Settings::class)
-        subclass(Destination.TodaySchedule::class)
+        subclass(Destination.ExamSchedule::class)
+        subclass(Destination.ScoreSchedule::class)
 
         // 普通功能页面
         subclass(Destination.TimeScheduleManagement::class)
         subclass(Destination.ManageCourseTables::class)
-        subclass(Destination.SchoolSelectionListScreen::class)
+        subclass(Destination.UserManagement::class)
         subclass(Destination.CourseTableConversion::class)
         subclass(Destination.NotificationSettings::class)
         subclass(Destination.MoreOptions::class)
@@ -125,8 +113,6 @@ val navSerializersModule = SerializersModule {
         subclass(Destination.HolidayManagement::class)
 
         // 带参数据类
-        subclass(Destination.AdapterSelection::class)
-        subclass(Destination.WebView::class)
         subclass(Destination.AddEditCourse::class)
         subclass(Destination.CourseManagementDetail::class)
         subclass(Destination.SingleScheduleEdit::class)

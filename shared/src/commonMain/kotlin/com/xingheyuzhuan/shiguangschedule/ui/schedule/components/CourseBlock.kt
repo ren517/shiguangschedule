@@ -33,6 +33,7 @@ import com.xingheyuzhuan.shiguangschedule.data.db.main.CourseWithWeeks
 import com.xingheyuzhuan.shiguangschedule.data.db.main.TimeSlot
 import com.xingheyuzhuan.shiguangschedule.data.model.schedule_style.BorderTypeProto
 import com.xingheyuzhuan.shiguangschedule.data.model.schedule_style.ScheduleModeProto
+import com.xingheyuzhuan.shiguangschedule.ui.schedule.util.XustCampusTime
 import com.xingheyuzhuan.shiguangschedule.ui.theme.LocalIsDarkTheme
 
 @Composable
@@ -59,6 +60,11 @@ fun CourseBlock(
     val blockColor = (courseColorAdapted ?: fallbackColorAdapted).copy(alpha = currentAlpha)
     val textColor = style.courseTextColor ?: MaterialTheme.colorScheme.onSurface
 
+    // 按课程地点（楼号/校区）套用对应校区作息，得到课程真实起止节次时间
+    val effectiveTimeSlots = XustCampusTime.effectiveTimeSlots(timeSlots, course.position)
+    val realStart = effectiveTimeSlots.find { it.number == course.startSection }
+    val realEnd = effectiveTimeSlots.find { it.number == course.endSection }
+
     // 字体大小
     val s13 = (13 * style.fontScale).sp
     val s10 = (10 * style.fontScale).sp
@@ -74,16 +80,15 @@ fun CourseBlock(
         if (isCustomTimeCourse) {
             customTimeString
         } else {
-            val startSlot = timeSlots.find { it.number == course.startSection }
-            val endSlot = timeSlots.find { it.number == course.endSection }
-            if (startSlot != null && endSlot != null) "${startSlot.startTime} - ${endSlot.endTime}" else null
+            if (realStart != null && realEnd != null) "${realStart.startTime} - ${realEnd.endTime}" else null
         }
     } else {
-        // 传统节次模式：只有自定义课程显示起止时间；普通节次课程只有在开启展示开始时间时才显示开始时间
+        // 节次模式（绝对时间布局）：所有课程都显示真实起止时间（按校区作息），
+        // 自定义时间课程显示其自定义起止时间。
         if (isCustomTimeCourse) {
             customTimeString
-        } else if (style.showStartTime) {
-            timeSlots.find { it.number == course.startSection }?.startTime
+        } else if (realStart != null && realEnd != null) {
+            "${realStart.startTime} - ${realEnd.endTime}"
         } else {
             null
         }

@@ -30,6 +30,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
@@ -50,6 +51,8 @@ fun <T> NativeNumberPicker(
     itemTextOffsetY: Dp = 0.dp,
     dividerColor: Color = MaterialTheme.colorScheme.primary,
     dividerSize: Dp = 1.dp,
+    selectedItemTextSize: TextUnit = 30.sp,
+    unselectedItemTextSize: TextUnit = 20.sp,
 ) {
     // 校验可见项数量
     require(visibleItemsCount >= 3 && visibleItemsCount % 2 != 0) {
@@ -147,9 +150,10 @@ fun <T> NativeNumberPicker(
                 val distance = abs(index - currentScrollPosition)
 
                 // 线性插值计算样式
+                val midTextSize = lerp(selectedItemTextSize, unselectedItemTextSize, 0.5f)
                 val (fontSize, textColor) = when {
                     distance <= 1f -> {
-                        lerp(30.sp, 25.sp, distance) to
+                        lerp(selectedItemTextSize, midTextSize, distance) to
                                 lerp(
                                     MaterialTheme.colorScheme.primary,
                                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
@@ -157,14 +161,14 @@ fun <T> NativeNumberPicker(
                                 )
                     }
                     distance <= 2f -> {
-                        lerp(25.sp, 20.sp, distance - 1f) to
+                        lerp(midTextSize, unselectedItemTextSize, distance - 1f) to
                                 lerp(
                                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                                     MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                                     distance - 1f
                                 )
                     }
-                    else -> 20.sp to MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                    else -> unselectedItemTextSize to MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                 }
 
                 Box(
@@ -183,6 +187,8 @@ fun <T> NativeNumberPicker(
                         fontSize = fontSize,
                         color = textColor,
                         textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        softWrap = false,
                         style = TextStyle(
                             lineHeightStyle = LineHeightStyle(
                                 alignment = LineHeightStyle.Alignment.Center,

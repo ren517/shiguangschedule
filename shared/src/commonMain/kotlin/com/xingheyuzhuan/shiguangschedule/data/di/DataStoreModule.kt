@@ -6,6 +6,7 @@ import androidx.datastore.core.okio.OkioStorage
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import com.xingheyuzhuan.shiguangschedule.data.model.schedule_style.ScheduleGridStyleProto
+import com.xingheyuzhuan.shiguangschedule.data.repository.JWXT_ACCOUNT_DATA_STORE
 import com.xingheyuzhuan.shiguangschedule.data.repository.SCHEDULE_STYLE_DATASTORE_FILE_NAME
 import com.xingheyuzhuan.shiguangschedule.data.repository.ScheduleStyleSerializer
 import okio.FileSystem
@@ -59,6 +60,16 @@ class DataStoreModule {
     ): DataStore<Preferences> {
         return PreferenceDataStoreFactory.createWithPath(
             produceFile = { filesDir / "datastore" / "api_config.preferences_pb" }
+        )
+    }
+
+    @Single
+    @Named(JWXT_ACCOUNT_DATA_STORE)
+    fun provideJwxtAccountDataStore(
+        @Named("FilesDir") filesDir: Path
+    ): DataStore<Preferences> {
+        return PreferenceDataStoreFactory.createWithPath(
+            produceFile = { filesDir / "datastore" / "jwxt_account.preferences_pb" }
         )
     }
 }

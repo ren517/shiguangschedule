@@ -1,6 +1,6 @@
 <resources>
     <!-- Basic App Information -->
-    <string name="app_name">Shiguang Schedule</string>
+    <string name="app_name">Shiguang Schedule - XUST</string>
 
     <string name="action_confirm">Confirm</string>
     <string name="action_cancel">Cancel</string>

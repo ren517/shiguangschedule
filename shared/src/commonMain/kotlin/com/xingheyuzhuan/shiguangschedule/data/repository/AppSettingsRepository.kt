@@ -175,6 +175,8 @@ class AppSettingsRepository(
             prefs[AppSettingsModel.KEY_AUTO_CONTROL_MODE] = newSettings.autoControlMode.value
             prefs[AppSettingsModel.KEY_COMPAT_WEARABLE_SYNC] = newSettings.compatWearableSync
             prefs[AppSettingsModel.KEY_SHOW_NON_CURRENT_WEEK_COURSES] = newSettings.showNonCurrentWeekCourses
+            prefs[AppSettingsModel.KEY_SCHOOL_YEAR] = newSettings.schoolYear
+            prefs[AppSettingsModel.KEY_SCHOOL_TERM] = newSettings.schoolTerm
             prefs[AppSettingsModel.KEY_START_SCREEN] = newSettings.startScreen.value
             prefs[AppSettingsModel.KEY_THEME_MODE] = newSettings.themeMode.value
             prefs[AppSettingsModel.KEY_USE_DYNAMIC_COLOR] = newSettings.useDynamicColor
@@ -183,6 +185,24 @@ class AppSettingsRepository(
             prefs[AppSettingsModel.KEY_BACKGROUND_IMAGE_PATH_LIGHT] = newSettings.backgroundImagePath.light
             prefs[AppSettingsModel.KEY_BACKGROUND_IMAGE_PATH_DARK] = newSettings.backgroundImagePath.dark
             prefs[AppSettingsModel.KEY_DEVELOPER_MODE_ENABLED] = newSettings.developerModeEnabled
+        }
+    }
+
+    /**
+     * 设置当前学年（教务系统代号 xnm）。
+     */
+    suspend fun setSchoolYear(schoolYear: String) {
+        dataStore.edit { prefs ->
+            prefs[AppSettingsModel.KEY_SCHOOL_YEAR] = schoolYear.trim()
+        }
+    }
+
+    /**
+     * 设置当前学期（教务系统代号 xqm）。
+     */
+    suspend fun setSchoolTerm(schoolTerm: String) {
+        dataStore.edit { prefs ->
+            prefs[AppSettingsModel.KEY_SCHOOL_TERM] = schoolTerm.trim()
         }
     }
 
@@ -225,6 +245,12 @@ class AppSettingsRepository(
                     }
                     AppSettingsModel.KEY_SHOW_NON_CURRENT_WEEK_COURSES -> {
                         strValue.toBooleanStrictOrNull()?.let { prefs[AppSettingsModel.KEY_SHOW_NON_CURRENT_WEEK_COURSES] = it }
+                    }
+                    AppSettingsModel.KEY_SCHOOL_YEAR -> {
+                        prefs[AppSettingsModel.KEY_SCHOOL_YEAR] = strValue
+                    }
+                    AppSettingsModel.KEY_SCHOOL_TERM -> {
+                        prefs[AppSettingsModel.KEY_SCHOOL_TERM] = strValue
                     }
                     AppSettingsModel.KEY_CUSTOM_LIGHT_PRIMARY -> {
                         strValue.toLongOrNull()?.let { prefs[AppSettingsModel.KEY_CUSTOM_LIGHT_PRIMARY] = it }

@@ -237,6 +237,7 @@
     <!-- 管理课表 -->
     <string name="title_manage_course_tables">管理课表</string>
     <string name="dialog_title_add_table">添加新课表</string>
+    <string name="dialog_title_select_sync_table">选择同步到的课表</string>
     <string name="a11y_add_new_table">添加新课表</string>
     <string name="label_table_name">课表名称</string>
     <string name="text_no_tables_hint">暂无课表，点击右下角按钮添加。</string>
@@ -637,4 +638,82 @@
     <string name="holiday_picker_hint_select_end">请选择结束日期(单天点击确认即可)</string>
     <string name="holiday_picker_hint_select_start">点击选择开始日期</string>
 
+    <!-- 考试安排与教务账号（西安科技大学） -->
+    <string name="nav_exam_schedule">考试安排</string>
+    <string name="title_exam_schedule">考试安排</string>
+    <string name="exam_empty_text">当前没有考试</string>
+    <string name="exam_synced_at_format">数据同步于 %1$s</string>
+    <string name="exam_refresh_success_format">考试安排已更新（%1$d 条）</string>
+    <string name="exam_refresh_failed">考试安排获取失败（教务系统可能尚未发布本学期考试安排）</string>
+    <string name="exam_label_time">考试时间</string>
+    <string name="exam_label_place">考场</string>
+    <string name="exam_label_seat">座位号</string>
+    <string name="exam_label_method">考核方式</string>
+    <string name="exam_label_college">开课学院</string>
+    <string name="exam_label_teachers">监考教师</string>
+    <string name="exam_label_campus">校区</string>
+    <string name="item_school_term">学年与学期设置</string>
+    <string name="desc_school_term">设置当前教务系统的学年与学期</string>
+    <string name="dialog_title_school_term">学年与学期设置</string>
+    <string name="term_school_year">学年</string>
+    <string name="term_semester">学期</string>
+    <string name="term_first">第一学期</string>
+    <string name="term_second">第二学期</string>
+    <string name="term_school_year_format">%1$s-%2$s学年</string>
+    <string name="item_jwxt_account">教务账号登录</string>
+    <string name="desc_jwxt_account">用于获取考试安排的教务系统账号</string>
+    <string name="dialog_title_jwxt_login">登录教务系统</string>
+    <string name="jwxt_field_student_id">学号</string>
+    <string name="jwxt_field_password">密码</string>
+    <string name="jwxt_logging_in">正在登录...</string>
+    <string name="jwxt_logout">退出登录</string>
+    <string name="jwxt_logged_in_format">已登录 %1$s</string>
+    <string name="jwxt_not_logged_in">未登录</string>
+
+
+
+    <!-- 成绩查询与用户管理（西安科技大学） -->
+    <string name="score_tap_to_expand">点击查看详情</string>
+    <string name="score_tap_to_collapse">收起详情</string>
+    <string name="nav_score">成绩</string>
+    <string name="title_score">成绩查询</string>
+    <string name="score_empty_text">暂无成绩</string>
+    <string name="score_label_count">课程门数</string>
+    <string name="score_label_credits">总学分</string>
+    <string name="score_label_gpa">平均绩点</string>
+    <string name="score_label_teacher">任课教师</string>
+    <string name="score_publish_prefix">出分时间</string>
+    <string name="score_synced_at_format">数据同步于 %1$s</string>
+    <string name="score_refresh_success_format">成绩已更新（%1$d 门）</string>
+    <string name="score_refresh_failed">成绩查询失败</string>
+    <string name="title_user_management">用户管理</string>
+    <string name="item_user_management">用户管理</string>
+    <string name="desc_user_management">管理教务账号、学年学期与数据同步</string>
+    <string name="section_jwxt_users">教务账号</string>
+    <string name="section_school_term">学年与学期</string>
+    <string name="section_data_sync">数据同步</string>
+    <string name="user_add">添加用户</string>
+    <string name="user_empty_hint">还没有教务账号，点击下方「添加用户」</string>
+    <string name="user_not_selected">请先添加并选择一个教务账号</string>
+    <string name="dialog_title_add_user">添加教务账号</string>
+    <string name="user_field_name">姓名</string>
+    <string name="user_field_student_id">学号</string>
+    <string name="user_field_password">教务系统密码</string>
+    <string name="user_adding">正在验证并登录教务系统...</string>
+    <string name="user_add_success_format">账号 %1$s 添加成功</string>
+    <string name="user_add_failed">账号添加失败</string>
+    <string name="dialog_title_delete_user">删除账号</string>
+    <string name="dialog_text_delete_user">确定删除学号 %1$s 及其本地缓存吗？</string>
+    <string name="action_sync_schedule">同步课表</string>
+    <string name="desc_sync_schedule">从教务系统拉取本学期课表并写入所选课表</string>
+    <string name="action_query_score">查询成绩</string>
+    <string name="desc_query_score">从教务系统查询本学期成绩</string>
+    <string name="action_query_exam">查询考试信息</string>
+    <string name="desc_query_exam">从教务系统查询本学期考试安排</string>
+    <string name="sync_schedule_success_format">课表已同步（%1$d 条）</string>
+    <string name="sync_schedule_failed">课表同步失败</string>
+    <string name="score_query_success_format">成绩已查询（%1$d 门）</string>
+    <string name="score_query_failed">成绩查询失败</string>
+    <string name="exam_query_success_format">考试安排已查询（%1$d 条）</string>
+    <string name="exam_query_failed">考试安排查询失败</string>
 </resources>

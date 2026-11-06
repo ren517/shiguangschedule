@@ -188,6 +188,15 @@ class CourseTableRepository(
     }
 
     /**
+     * 清空指定课表下的全部课程（周次关联随外键级联删除）。
+     *
+     * 教务课表同步是「整表替换」策略，同步前调用本方法清空旧数据。
+     */
+    suspend fun clearCourses(courseTableId: String) {
+        courseDao.deleteCoursesByTableId(courseTableId)
+    }
+
+    /**
      * 删除一个课程。
      */
     suspend fun deleteCourse(course: Course) {
@@ -379,18 +388,21 @@ class CourseTableRepository(
     }
 }
 
+/**
+ * 默认节次时间（西安科技大学 XUST 作息，采用骊山校园西区为主校区基准）。
+ * 上午第 3、4 节西区与东区/秦汉校区不同（西区 10:25-11:15 / 11:20-12:10，
+ * 东区·秦汉 10:05-10:55 / 11:00-11:50）。课程卡片会按地点楼号自动匹配对应
+ * 校区作息（详见 ui.schedule.util.XustCampusTime），无需手动调整。下午及晚上各区一致。
+ */
 private val defaultTimeSlots = listOf(
-    TimeSlot(number = 1, startTime = "08:00", endTime = "08:45", timeTableId = "placeholder"),
-    TimeSlot(number = 2, startTime = "08:50", endTime = "09:35", timeTableId = "placeholder"),
-    TimeSlot(number = 3, startTime = "09:50", endTime = "10:35", timeTableId = "placeholder"),
-    TimeSlot(number = 4, startTime = "10:40", endTime = "11:25", timeTableId = "placeholder"),
-    TimeSlot(number = 5, startTime = "11:30", endTime = "12:15", timeTableId = "placeholder"),
-    TimeSlot(number = 6, startTime = "14:00", endTime = "14:45", timeTableId = "placeholder"),
-    TimeSlot(number = 7, startTime = "14:50", endTime = "15:35", timeTableId = "placeholder"),
-    TimeSlot(number = 8, startTime = "15:45", endTime = "16:30", timeTableId = "placeholder"),
-    TimeSlot(number = 9, startTime = "16:35", endTime = "17:20", timeTableId = "placeholder"),
-    TimeSlot(number = 10, startTime = "18:30", endTime = "19:15", timeTableId = "placeholder"),
-    TimeSlot(number = 11, startTime = "19:20", endTime = "20:05", timeTableId = "placeholder"),
-    TimeSlot(number = 12, startTime = "20:10", endTime = "20:55", timeTableId = "placeholder"),
-    TimeSlot(number = 13, startTime = "21:10", endTime = "21:55", timeTableId = "placeholder")
+    TimeSlot(number = 1, startTime = "08:05", endTime = "08:55", timeTableId = "placeholder"),
+    TimeSlot(number = 2, startTime = "09:00", endTime = "09:50", timeTableId = "placeholder"),
+    TimeSlot(number = 3, startTime = "10:25", endTime = "11:15", timeTableId = "placeholder"),
+    TimeSlot(number = 4, startTime = "11:20", endTime = "12:10", timeTableId = "placeholder"),
+    TimeSlot(number = 5, startTime = "14:10", endTime = "15:00", timeTableId = "placeholder"),
+    TimeSlot(number = 6, startTime = "15:05", endTime = "15:55", timeTableId = "placeholder"),
+    TimeSlot(number = 7, startTime = "16:05", endTime = "16:55", timeTableId = "placeholder"),
+    TimeSlot(number = 8, startTime = "17:00", endTime = "17:50", timeTableId = "placeholder"),
+    TimeSlot(number = 9, startTime = "19:00", endTime = "19:50", timeTableId = "placeholder"),
+    TimeSlot(number = 10, startTime = "20:00", endTime = "20:50", timeTableId = "placeholder")
 )

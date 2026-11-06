@@ -64,9 +64,11 @@ import org.jetbrains.compose.resources.vectorResource
 import shiguangschedule.shared.generated.resources.Res
 import shiguangschedule.shared.generated.resources.account_circle_24px
 import shiguangschedule.shared.generated.resources.account_circle_filled_24px
+import shiguangschedule.shared.generated.resources.award_star_24px
 import shiguangschedule.shared.generated.resources.nav_course_schedule
+import shiguangschedule.shared.generated.resources.nav_exam_schedule
+import shiguangschedule.shared.generated.resources.nav_score
 import shiguangschedule.shared.generated.resources.nav_settings
-import shiguangschedule.shared.generated.resources.nav_today_schedule
 import shiguangschedule.shared.generated.resources.view_agenda_24px
 import shiguangschedule.shared.generated.resources.view_agenda_filled_24px
 import shiguangschedule.shared.generated.resources.view_week_24px
@@ -94,8 +96,9 @@ fun AdaptiveNavigationScaffold(
     navigationModifier: Modifier = Modifier,
     content: @Composable (PaddingValues) -> Unit
 ) {
-    val todayLabel = stringResource(Res.string.nav_today_schedule)
+    val todayLabel = stringResource(Res.string.nav_exam_schedule)
     val courseLabel = stringResource(Res.string.nav_course_schedule)
+    val scoreLabel = stringResource(Res.string.nav_score)
     val settingsLabel = stringResource(Res.string.nav_settings)
 
     val todaySelectedIcon = vectorResource(Res.drawable.view_agenda_filled_24px)
@@ -104,17 +107,19 @@ fun AdaptiveNavigationScaffold(
     val courseUnselectedIcon = vectorResource(Res.drawable.view_week_24px)
     val settingsSelectedIcon = vectorResource(Res.drawable.account_circle_filled_24px)
     val settingsUnselectedIcon = vectorResource(Res.drawable.account_circle_24px)
+    val scoreIcon = vectorResource(Res.drawable.award_star_24px)
 
     val navItems = remember(
-        todayLabel, courseLabel, settingsLabel,
+        todayLabel, courseLabel, scoreLabel, settingsLabel,
         todaySelectedIcon, todayUnselectedIcon,
         courseSelectedIcon, courseUnselectedIcon,
+        scoreIcon,
         settingsSelectedIcon, settingsUnselectedIcon
     ) {
         listOf(
             NavItemData(
                 label = todayLabel,
-                destination = Destination.TodaySchedule,
+                destination = Destination.ExamSchedule,
                 selectedIcon = todaySelectedIcon,
                 unselectedIcon = todayUnselectedIcon
             ),
@@ -123,6 +128,12 @@ fun AdaptiveNavigationScaffold(
                 destination = Destination.CourseSchedule,
                 selectedIcon = courseSelectedIcon,
                 unselectedIcon = courseUnselectedIcon
+            ),
+            NavItemData(
+                label = scoreLabel,
+                destination = Destination.ScoreSchedule,
+                selectedIcon = scoreIcon,
+                unselectedIcon = scoreIcon
             ),
             NavItemData(
                 label = settingsLabel,

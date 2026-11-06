@@ -92,6 +92,8 @@ import shiguangschedule.shared.generated.resources.item_set_start_date
 import shiguangschedule.shared.generated.resources.item_show_non_current_week
 import shiguangschedule.shared.generated.resources.item_show_weekends
 import shiguangschedule.shared.generated.resources.item_total_weeks
+import shiguangschedule.shared.generated.resources.desc_user_management
+import shiguangschedule.shared.generated.resources.item_user_management
 import shiguangschedule.shared.generated.resources.more_horiz_24px
 import shiguangschedule.shared.generated.resources.section_title_advanced_features
 import shiguangschedule.shared.generated.resources.section_title_general_settings
@@ -409,6 +411,11 @@ private fun AdvancedSettingsSection(onNavigate: (Destination) -> Unit) {
                 stringResource(Res.string.section_title_advanced_features),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
+            )
+            SettingItem(
+                title = stringResource(Res.string.item_user_management),
+                subtitle = stringResource(Res.string.desc_user_management),
+                onClick = { onNavigate(Destination.UserManagement) }
             )
             SettingItem(
                 title = stringResource(Res.string.item_course_conversion),

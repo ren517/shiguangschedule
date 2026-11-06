@@ -8,15 +8,21 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.xingheyuzhuan.shiguangschedule.ui.theme.DefaultThemeColor
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.compose.resources.StringResource
 import shiguangschedule.shared.generated.resources.Res
 import shiguangschedule.shared.generated.resources.nav_course_schedule
-import shiguangschedule.shared.generated.resources.nav_today_schedule
+import shiguangschedule.shared.generated.resources.nav_exam_schedule
+import shiguangschedule.shared.generated.resources.term_first
+import shiguangschedule.shared.generated.resources.term_second
 import shiguangschedule.shared.generated.resources.theme_dark
 import shiguangschedule.shared.generated.resources.theme_follow_system
 import shiguangschedule.shared.generated.resources.theme_light
+import kotlin.time.Clock
 
 /**
  * 通用的深浅色配置包装类
@@ -71,8 +77,8 @@ enum class StartScreen(val value: String, val labelRes: StringResource) {
     /** 周课表 */
     COURSE_SCHEDULE("COURSE_SCHEDULE", Res.string.nav_course_schedule),
 
-    /** 今日课表 */
-    TODAY_SCHEDULE("TODAY_SCHEDULE", Res.string.nav_today_schedule);
+    /** 考试安排 */
+    EXAM_SCHEDULE("EXAM_SCHEDULE", Res.string.nav_exam_schedule);
 
     companion object {
         fun fromString(value: String?): StartScreen {
@@ -80,6 +86,54 @@ enum class StartScreen(val value: String, val labelRes: StringResource) {
         }
     }
 }
+
+/**
+ * 教务系统学期代号枚举（西安科技大学）
+ *
+ * 教务接口使用的是语义不直观的代号：第一学期为 "3"，第二学期为 "12"。
+ *
+ * @property code 传给教务表单 `xqm` 的值
+ */
+enum class SchoolTerm(val code: String, val labelRes: StringResource) {
+    /** 第一学期（秋季学期），教务代号 3 */
+    FIRST("3", Res.string.term_first),
+
+    /** 第二学期（春季学期），教务代号 12 */
+    SECOND("12", Res.string.term_second);
+
+    companion object {
+        fun fromCode(code: String?): SchoolTerm {
+            return entries.find { it.code == code } ?: FIRST
+        }
+
+        /**
+         * 按当前自然月推算默认学期。
+         * 校历上 2~7 月为第二学期，其余月份为第一学期。
+         */
+        fun currentDefault(): SchoolTerm {
+            val month = Clock.System.now()
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .date.month.number
+            return if (month in SECOND_TERM_MONTH_RANGE) SECOND else FIRST
+        }
+
+        /** 校历上归属第二学期的月份区间 */
+        private val SECOND_TERM_MONTH_RANGE = 2..7
+    }
+}
+
+/**
+ * 按当前自然月推算默认学年起始年。
+ *
+ * 教务 `xnm` 表示学年起始年：9 月及之后进入新学年，否则仍然沿用上一学年。
+ */
+fun defaultSchoolYear(): String {
+    val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+    return if (today.month.number >= AUTUMN_TERM_START_MONTH) today.year.toString() else (today.year - 1).toString()
+}
+
+/** 秋季学期开始的月份 */
+private const val AUTUMN_TERM_START_MONTH = 9
 
 /**
  * 应用主题模式枚举
@@ -134,6 +188,16 @@ data class AppSettingsModel(
     /** 是否显示非本周课程 */
     val showNonCurrentWeekCourses: Boolean = false,
 
+    /**
+     * 当前学年（教务表单 `xnm`，如 "2026" 表示 2026-2027 学年）
+     */
+    val schoolYear: String = defaultSchoolYear(),
+
+    /**
+     * 当前学期（教务表单 `xqm`，"3" 第一学期 / "12" 第二学期）
+     */
+    val schoolTerm: String = SchoolTerm.currentDefault().code,
+
     /** 应用启动时显示的页面 */
     val startScreen: StartScreen = StartScreen.COURSE_SCHEDULE,
 
@@ -180,6 +244,10 @@ data class AppSettingsModel(
         val KEY_COMPAT_WEARABLE_SYNC = booleanPreferencesKey("compat_wearable_sync")
         /** 是否显示非本周课程的存储键 */
         val KEY_SHOW_NON_CURRENT_WEEK_COURSES = booleanPreferencesKey("show_non_current_week_courses")
+        /** 当前学年（xnm）的存储键 */
+        val KEY_SCHOOL_YEAR = stringPreferencesKey("school_year")
+        /** 当前学期（xqm）的存储键 */
+        val KEY_SCHOOL_TERM = stringPreferencesKey("school_term")
         /** 应用启动页面的存储键 */
         val KEY_START_SCREEN = stringPreferencesKey("start_screen")
         /** 应用主题模式的存储键 */
@@ -205,6 +273,8 @@ data class AppSettingsModel(
             KEY_REMIND_BEFORE_MINUTES,
             KEY_HOLIDAYS_JSON,
             KEY_SHOW_NON_CURRENT_WEEK_COURSES,
+            KEY_SCHOOL_YEAR,
+            KEY_SCHOOL_TERM,
             KEY_CUSTOM_LIGHT_PRIMARY,
             KEY_CUSTOM_DARK_PRIMARY
         )
@@ -233,6 +303,8 @@ data class AppSettingsModel(
                 autoControlMode = AutoControlMode.fromString(prefs[KEY_AUTO_CONTROL_MODE]),
                 compatWearableSync = prefs[KEY_COMPAT_WEARABLE_SYNC] ?: d.compatWearableSync,
                 showNonCurrentWeekCourses = prefs[KEY_SHOW_NON_CURRENT_WEEK_COURSES] ?: d.showNonCurrentWeekCourses,
+                schoolYear = prefs[KEY_SCHOOL_YEAR]?.takeIf { it.isNotBlank() } ?: d.schoolYear,
+                schoolTerm = prefs[KEY_SCHOOL_TERM]?.let { SchoolTerm.fromCode(it) }?.code ?: d.schoolTerm,
                 startScreen = prefs[KEY_START_SCREEN]?.let { StartScreen.fromString(it) } ?: d.startScreen,
                 themeMode = prefs[KEY_THEME_MODE]?.let { AppThemeMode.fromString(it) } ?: d.themeMode,
                 useDynamicColor = prefs[KEY_USE_DYNAMIC_COLOR] ?: d.useDynamicColor,

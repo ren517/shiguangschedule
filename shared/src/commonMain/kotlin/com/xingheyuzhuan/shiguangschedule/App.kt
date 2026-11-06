@@ -26,10 +26,8 @@ import androidx.navigation3.ui.NavDisplay
 import com.xingheyuzhuan.shiguangschedule.data.model.StartScreen
 import com.xingheyuzhuan.shiguangschedule.tool.ExternalFileManager
 import com.xingheyuzhuan.shiguangschedule.ui.components.AdaptiveNavigationScaffold
+import com.xingheyuzhuan.shiguangschedule.ui.exam.ExamScheduleScreen
 import com.xingheyuzhuan.shiguangschedule.ui.schedule.WeeklyScheduleScreen
-import com.xingheyuzhuan.shiguangschedule.ui.schoolselection.list.AdapterSelectionScreen
-import com.xingheyuzhuan.shiguangschedule.ui.schoolselection.list.SchoolSelectionListScreen
-import com.xingheyuzhuan.shiguangschedule.ui.schoolselection.web.WebViewScreen
 import com.xingheyuzhuan.shiguangschedule.ui.settings.SettingsScreen
 import com.xingheyuzhuan.shiguangschedule.ui.settings.SettingsViewModel
 import com.xingheyuzhuan.shiguangschedule.ui.settings.additional.LanguageSettingScreen
@@ -53,9 +51,10 @@ import com.xingheyuzhuan.shiguangschedule.ui.settings.themesettings.ThemeSetting
 import com.xingheyuzhuan.shiguangschedule.ui.settings.time.ComboScheduleEditScreen
 import com.xingheyuzhuan.shiguangschedule.ui.settings.time.SingleScheduleEditScreen
 import com.xingheyuzhuan.shiguangschedule.ui.settings.time.TimeScheduleManagementScreen
+import com.xingheyuzhuan.shiguangschedule.ui.score.ScoreScreen
 import com.xingheyuzhuan.shiguangschedule.ui.settings.update.UpdateRepoScreen
+import com.xingheyuzhuan.shiguangschedule.ui.usermanagement.UserManagementScreen
 import com.xingheyuzhuan.shiguangschedule.ui.theme.ShiguangScheduleTheme
-import com.xingheyuzhuan.shiguangschedule.ui.today.TodayScheduleScreen
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -68,7 +67,7 @@ fun App() {
             val startDest = remember(state.appSettings.startScreen) {
                 when (state.appSettings.startScreen) {
                     StartScreen.COURSE_SCHEDULE -> Destination.CourseSchedule
-                    StartScreen.TODAY_SCHEDULE -> Destination.TodaySchedule
+                    StartScreen.EXAM_SCHEDULE -> Destination.ExamSchedule
                 }
             }
             AppNavigation(startDestination = startDest)
@@ -185,9 +184,10 @@ fun ScreenContent(
             onNavHideFractionChanged = onNavHideFractionChanged
         )
         Destination.Settings -> SettingsScreen(onNavigate, onBack)
-        Destination.TodaySchedule -> TodayScheduleScreen(onNavigate, onBack)
+        Destination.ExamSchedule -> ExamScheduleScreen(onNavigate, onBack)
+        Destination.ScoreSchedule -> ScoreScreen(onNavigate, onBack)
+        Destination.UserManagement -> UserManagementScreen(onBack)
         Destination.ManageCourseTables -> ManageCourseTablesScreen(onBack)
-        Destination.SchoolSelectionListScreen -> SchoolSelectionListScreen(onNavigate, onBack)
         Destination.CourseTableConversion -> CourseTableConversionScreen(onNavigate, onBack)
         Destination.NotificationSettings -> NotificationSettingsScreen(onBack)
         Destination.MoreOptions -> MoreOptionsScreen(onNavigate, onBack)
@@ -230,12 +230,6 @@ fun ScreenContent(
             onBack = onBack
         )
 
-        is Destination.AdapterSelection -> AdapterSelectionScreen(
-            onNavigate, onBack, targetDest.schoolId, targetDest.schoolName, targetDest.categoryNumber, targetDest.resourceFolder
-        )
-        is Destination.WebView -> WebViewScreen(
-            onNavigate, onBack, targetDest.initialUrl, targetDest.assetJsPath
-        )
         is Destination.AddEditCourse -> AddEditCourseScreen(
             onBack, targetDest.courseId
         )

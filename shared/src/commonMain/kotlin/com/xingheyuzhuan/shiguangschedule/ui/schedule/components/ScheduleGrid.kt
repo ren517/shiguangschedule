@@ -28,12 +28,24 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.xingheyuzhuan.shiguangschedule.data.model.schedule_style.ScheduleModeProto
+import com.xingheyuzhuan.shiguangschedule.ui.schedule.util.TimeAxisCompressor
+import com.xingheyuzhuan.shiguangschedule.ui.schedule.util.XustCampusTime
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.stringArrayResource
 import shiguangschedule.shared.generated.resources.Res
 import shiguangschedule.shared.generated.resources.week_days_short_names
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
+
+/** "HH:mm" → 分钟数（自 00:00 起）。解析失败返回 null。 */
+private fun hhmmToMinute(text: String?): Int? {
+    if (text.isNullOrBlank()) return null
+    val parts = text.split(":")
+    if (parts.size != 2) return null
+    val h = parts[0].trim().toIntOrNull() ?: return null
+    val m = parts[1].trim().toIntOrNull() ?: return null
+    return h * 60 + m
+}
 
 @Suppress("COMPOSE_APPLIER_CALL_MISMATCH")
 @Composable
@@ -70,6 +82,32 @@ fun ScheduleGrid(
             calculateSingleSchedulables(viewState.mergedCourses, viewState.firstDayOfWeek, viewState.showWeekends)
         }
         val sectionHeightPx = with(density) { style.sectionHeight.toPx() }
+
+        // ===== 绝对时间轴参数（节次模式）：课程块按真实起止时间定位；
+        // ===== 超过 30 分钟的大段空档（午休/晚休）自动压缩，小课间保持真实时长 =====
+        val sortedBaseSlots = viewState.timeSlots.sortedBy { it.number }
+        val axisCompressor = remember(viewState.timeSlots) { TimeAxisCompressor(sortedBaseSlots) }
+        val pxPerMinute = (sectionHeightPx * maxGridSections) / axisCompressor.compressedTotalMin
+
+        // 课程真实起止分钟（自定义时间直接用；否则按楼号/校区匹配作息）
+        fun realRangeMinutes(item: ISingleSchedulable): Pair<Int, Int>? {
+            val c = item.courseWrapper.course
+            if (c.isCustomTime) {
+                val s = hhmmToMinute(c.customStartTime)
+                val e = hhmmToMinute(c.customEndTime)
+                return if (s != null && e != null && e > s) s to e else null
+            }
+            val eff = XustCampusTime.effectiveTimeSlots(viewState.timeSlots, c.position)
+            val s = hhmmToMinute(eff.find { it.number == c.startSection }?.startTime)
+            val e = hhmmToMinute(eff.find { it.number == c.endSection }?.endTime)
+            return if (s != null && e != null && e > s) s to e else null
+        }
+
+        fun absoluteTopPx(item: ISingleSchedulable): Int? =
+            realRangeMinutes(item)?.let { (s, _) -> (axisCompressor.compress(s) * pxPerMinute).toInt() }
+
+        fun absoluteHeightPx(item: ISingleSchedulable): Int? =
+            realRangeMinutes(item)?.let { (s, e) -> ((axisCompressor.compress(e) - axisCompressor.compress(s)) * pxPerMinute).toInt() }
 
         var activeDragHour by remember { mutableStateOf<Int?>(null) }
         var activeDragMinuteStr by remember { mutableStateOf<String?>(null) }
@@ -194,7 +232,12 @@ fun ScheduleGrid(
 
                             Box(
                                 modifier = Modifier
-                                    .padding(style.courseBlockOuterPadding)
+                                    // 左右间距恢复为原来的默认（courseBlockOuterPadding），
+                                    // 上下额外加一段休息时间留白，避免课程块上下贴在一起。
+                                    .padding(
+                                        horizontal = style.courseBlockOuterPadding,
+                                        vertical = style.courseBlockOuterPadding + 4.dp
+                                    )
                                     .zIndex(if (isExpanded) 2f else 0f)
                                     .then(
                                         if (!isExpanded) {
@@ -367,9 +410,22 @@ fun ScheduleGrid(
                                 val x = i * cellWidth
                                 drawLine(gridLineColor, Offset(x, 0f), Offset(x, size.height), strokeWidth = strokeWidthPx)
                             }
-                            for (i in 1..maxGridSections) {
-                                val y = i * sectionHeightPx
-                                drawLine(gridLineColor, Offset(0f, y), Offset(size.width, y), strokeWidth = strokeWidthPx)
+                            if (is24HourMode) {
+                                for (i in 1..maxGridSections) {
+                                    val y = i * sectionHeightPx
+                                    drawLine(gridLineColor, Offset(0f, y), Offset(size.width, y), strokeWidth = strokeWidthPx)
+                                }
+                            } else {
+                                // 节次模式：横线画在每个节次的（压缩后）真实开始时间处
+                                sortedBaseSlots.forEach { slot ->
+                                    val sm = hhmmToMinute(slot.startTime)
+                                    if (sm != null) {
+                                        val y = axisCompressor.compress(sm) * pxPerMinute
+                                        drawLine(gridLineColor, Offset(0f, y), Offset(size.width, y), strokeWidth = strokeWidthPx)
+                                    }
+                                }
+                                val yEnd = axisCompressor.compressedTotalMin * pxPerMinute
+                                drawLine(gridLineColor, Offset(0f, yEnd), Offset(size.width, yEnd), strokeWidth = strokeWidthPx)
                             }
                         }
                         .pointerInput(displayDaysCount, sectionHeightPx, viewState.firstDayOfWeek, maxGridSections, is24HourMode, state.expandedItem) {
@@ -380,8 +436,13 @@ fun ScheduleGrid(
                                     return@detectTapGestures
                                 }
                                 val dayIdx = (offset.x / (size.width / displayDaysCount)).toInt().coerceIn(0, displayDaysCount - 1)
-                                val secIdx = (offset.y / sectionHeightPx).toInt().coerceIn(0, maxGridSections - 1)
-                                actions.onGridCellClicked(mapDisplayIndexToDay(dayIdx, viewState.firstDayOfWeek), if (is24HourMode) secIdx else (secIdx + 1))
+                                val section = if (is24HourMode) {
+                                    (offset.y / sectionHeightPx).toInt().coerceIn(0, maxGridSections - 1)
+                                } else {
+                                    // 绝对时间轴（大空档已压缩）：把点击纵坐标换算到压缩时间轴，再落到对应节次
+                                    axisCompressor.sectionAtCompressed(offset.y / pxPerMinute)
+                                }
+                                actions.onGridCellClicked(mapDisplayIndexToDay(dayIdx, viewState.firstDayOfWeek), section)
                             }
                         }
                 ) { measurables, constraints ->
@@ -392,7 +453,13 @@ fun ScheduleGrid(
                         val item = singleSchedulables[index]
                         val isExpanded = state.expandedItem != null && state.expandedItem?.parentBlock === item.parentBlock
 
-                        val originalHeightPx = ((item.endSection - item.startSection) * sectionHeightPx).toInt()
+                        // 编辑（拖拽/拉伸）用节次坐标；静态展示时节次模式按真实时间给高度
+                        val periodHeightPx = ((item.endSection - item.startSection) * sectionHeightPx).toInt()
+                        val originalHeightPx = if (!is24HourMode && !isExpanded) {
+                            absoluteHeightPx(item) ?: periodHeightPx
+                        } else {
+                            periodHeightPx
+                        }
 
                         var calculatedHeightPx = originalHeightPx
                         if (isExpanded) {
@@ -418,7 +485,13 @@ fun ScheduleGrid(
                             val isMoving = state.activeMoveIntent != null && state.activeMoveIntent?.parentBlock === item.parentBlock
 
                             val originalX = item.columnIndex * cellWidth + (if (isExpanded) 0 else item.subColumnIndex * (cellWidth / item.subColumnCount))
-                            val originalY = (item.startSection * sectionHeightPx).toInt()
+                            // 静态展示按真实时间定位顶部；拖拽/拉伸（isExpanded/isMoving）沿用节次坐标
+                            val periodY = (item.startSection * sectionHeightPx).toInt()
+                            val originalY = if (!is24HourMode && !isExpanded && !isMoving) {
+                                absoluteTopPx(item) ?: periodY
+                            } else {
+                                periodY
+                            }
 
                             var xPosition = originalX
                             var yPosition = originalY

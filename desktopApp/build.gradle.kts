@@ -13,7 +13,9 @@ kotlin {
     jvmToolchain(21)
 }
 
-val appVersion = "2.1.0"
+val appVersion = "1.0.1-beta"
+// 原生安装包（dmg/pkg/exe/msi/deb/rpm）只接受纯数字版本号，故派生一份去后缀的数字版
+val appPackageVersion = appVersion.substringBefore("-").ifEmpty { "1.0.0" }
 val appBaseName = "shiguangschedule"
 
 dependencies {
@@ -43,7 +45,7 @@ compose.desktop {
                 TargetFormat.Deb, TargetFormat.Rpm
             )
             packageName = "ShiguangSchedule"
-            packageVersion = appVersion
+            packageVersion = appPackageVersion
 
             modules("jdk.unsupported")
         }
